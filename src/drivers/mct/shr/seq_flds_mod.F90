@@ -130,7 +130,7 @@ module seq_flds_mod
   use shr_carma_mod     , only : shr_carma_readnl
   use shr_ndep_mod      , only : shr_ndep_readnl
   use shr_flds_mod      , only : seq_flds_dom_coord, seq_flds_dom_other
-
+  use shr_fan_mod       , only : shr_fan_readnl
   implicit none
   public
   save
@@ -3142,6 +3142,13 @@ contains
        call metadata_set(shr_fire_emis_ztop_token, longname, stdname, units)
     endif
 
+    call shr_fan_readnl(nlfilename='drv_flds_in', ID=ID, fan_fields=fan_fields, have_fields=fan_have_fields)
+    if (fan_have_fields) then
+       call seq_flds_add(l2x_fluxes, trim(fan_fields))
+       call seq_flds_add(x2a_fluxes, trim(fan_fields))
+    end if
+
+    
     !-----------------------------------------------------------------------------
     ! Dry Deposition fields
     ! First read namelist and figure out the drydep field list to pass
