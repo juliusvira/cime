@@ -11,7 +11,6 @@ module shr_fan_mod
   use shr_mpi_mod,    only : shr_mpi_bcast
 
   implicit none
-  save
   private
 
   public shr_fan_readnl
@@ -66,7 +65,7 @@ contains
        fan_fields = ''
     end if
     shr_fan_to_atm = have_fields
-    fan_fields_token = fan_fields
+    shr_fan_fields_token = fan_fields
     
   end subroutine shr_fan_readnl
   
