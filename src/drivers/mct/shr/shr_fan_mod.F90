@@ -6,16 +6,24 @@ module shr_fan_mod
   use shr_sys_mod, only : shr_sys_abort
   use shr_log_mod, only : loglev  => shr_log_Level
   use shr_log_mod, only : logunit => shr_log_Unit
+  use shr_file_mod,   only : shr_file_getUnit, shr_file_freeUnit
+  use seq_comm_mct,   only : seq_comm_iamroot, seq_comm_setptrs
+  use shr_mpi_mod,    only : shr_mpi_bcast
 
   implicit none
   save
   private
 
+  public shr_fan_readnl
+  
+  
 contains
 
-  subroutine shr_fan_readnl(filename_nl, id, fan_fields, have_fields)
-    use shr_mpi_mod, only : shr_mpi_bcase
-    character(len=*), intent(in)  :: filename_nl
+  subroutine shr_fan_readnl(nlfilename, id, fan_fields, have_fields)
+    use shr_mpi_mod, only : shr_mpi_bcast
+    use shr_nl_mod   , only : shr_nl_find_group_name
+
+    character(len=*), intent(in)  :: nlfilename
     integer, intent(in) :: id ! seq_comm ID
     character(len=*), intent(out) :: fan_fields
     logical, intent(out) :: have_fields
@@ -24,28 +32,38 @@ contains
     logical :: exists, fan_nh3_to_atm
     character(*),parameter :: subname = '(shr_fan_reanl) '
 
-    namelist /fan_nh3_to_atm/ fan_nh3_to_atm
+    namelist /fan_inparm/ fan_nh3_to_atm
     
     call seq_comm_setptrs(id, mpicom=mpicomm)
     if (seq_comm_iamroot(id)) then
-       inquire(file=trim(filename_nl), exist=exists)
+       inquire(file=trim(nlfilename), exist=exists)
        if (exists) then
           fileunit = shr_file_getUnit()
-          open(fileunit, file=trim(filename_nl), status='old' )
-          read(fileunit, fan_nh3_to_atm, iostat=iostat)
+          open(fileunit, file=trim(nlfilename), status='old' )
+          call shr_nl_find_group_name(fileunit, 'fan_inparm', iostat)
           if (iostat /= 0) then
-             call shr_sys_abort(subName//'Error reading namelist')
+             write(logunit, *) subname, 'FAN/CAM coupling not specified'
+             fan_nh3_to_atm = .false.
+             !call shr_sys_abort(subName//'Error reading namelist')
+          else          
+             read(fileunit, fan_inparm, iostat=iostat)
+             if (iostat /= 0) then
+                call shr_sys_abort(subName//'Error reading namelist')
+             end if
           end if
           close(fileunit)
           call shr_file_freeunit(fileunit)
        end if
-       call shr_mpi_bcase(fan_nh3_to_atm, mpicomm)
-       have_fields = fan_nh3_to_atm
-       if (fan_nh3_to_atm) then
-          fan_fields = 'Fall_NH3FAN'
-       else
-          fan_fields = ''
-       end if
+    
+    end if ! root
+    call shr_mpi_bcast(fan_nh3_to_atm, mpicomm)
+    have_fields = fan_nh3_to_atm
+    if (fan_nh3_to_atm) then
+       fan_fields = 'Fall_FANNH3'
+    else
+       fan_fields = ''
+    end if
+    
   end subroutine shr_fan_readnl
   
 endmodule shr_fan_mod
