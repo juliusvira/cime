@@ -15,7 +15,8 @@ module shr_fan_mod
   private
 
   public shr_fan_readnl
-  
+
+  logical, save, public :: shr_fan_to_atm = .false.
   
 contains
 
@@ -63,6 +64,7 @@ contains
     else
        fan_fields = ''
     end if
+    shr_fan_to_atm = have_fields
     
   end subroutine shr_fan_readnl
   
