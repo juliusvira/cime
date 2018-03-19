@@ -17,7 +17,8 @@ module shr_fan_mod
   public shr_fan_readnl
 
   logical, save, public :: shr_fan_to_atm = .false.
-  
+  character(len=CS), public :: fan_fields_token = ''
+
 contains
 
   subroutine shr_fan_readnl(nlfilename, id, fan_fields, have_fields)
@@ -65,6 +66,7 @@ contains
        fan_fields = ''
     end if
     shr_fan_to_atm = have_fields
+    fan_fields_token = fan_fields
     
   end subroutine shr_fan_readnl
   
