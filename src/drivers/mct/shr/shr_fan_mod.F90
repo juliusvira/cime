@@ -17,7 +17,7 @@ module shr_fan_mod
   public shr_fan_readnl
 
   logical, save, public :: shr_fan_to_atm = .false.
-  character(len=CS), public :: fan_fields_token = ''
+  character(len=CS), save, public :: fan_fields_token = ''
 
 contains
 
