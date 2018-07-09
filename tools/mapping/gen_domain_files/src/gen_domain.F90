@@ -597,23 +597,25 @@ contains
 
     call check_ret(nf_put_att_text(fid,NF_GLOBAL,'Compiler_Optimized',len_trim(str),str))
 
-    call sys_getenv('HOST',host,rcode)
-    if (rcode == 0) then
-       call check_ret(nf_put_att_text(fid,NF_GLOBAL,'hostname' ,len_trim(host),host))
-    else
-       call sys_getenv('HOSTNAME',host,rcode)
-       if (rcode == 0) then
-          call check_ret(nf_put_att_text(fid,NF_GLOBAL,'hostname' ,len_trim(host),host))
-       else
-          write(6,*) 'WARNING: could not determine hostname, so that information will not be stored in netCDF attribute. To avoid this warning in the future, set environment variable HOST or HOSTNAME.'
-       end if
-    end if
-
-    call sys_getenv('LOGNAME',user,rcode)
-    if (rcode /= 0) then
-       write(6,*) ' ERROR: getting LOGNAME'
-       stop
-    end if
+!!$    call sys_getenv('HOST',host,rcode)
+!!$    if (rcode == 0) then
+!!$       call check_ret(nf_put_att_text(fid,NF_GLOBAL,'hostname' ,len_trim(host),host))
+!!$    else
+!!$       call sys_getenv('HOSTNAME',host,rcode)
+!!$       if (rcode == 0) then
+!!$          call check_ret(nf_put_att_text(fid,NF_GLOBAL,'hostname' ,len_trim(host),host))
+!!$       else
+!!$          write(6,*) 'WARNING: could not determine hostname, so that information will not be stored in netCDF attribute. To avoid this warning in the future, set environment variable HOST or HOSTNAME.'
+!!$       end if
+!!$    end if
+!!$
+!!$    call sys_getenv('LOGNAME',user,rcode)
+!!$    if (rcode /= 0) then
+!!$       write(6,*) ' ERROR: getting LOGNAME'
+!!$       stop
+!!$    end if
+    user = 'juliusv'
+    host = 'cheyenne'
     str = 'created by '//trim(user)//', '//cdate(1:4)//'-'//cdate(5:6)//'-'//cdate(7:8) &
          &                //' '//ctime(1:2)//':'//ctime(3:4)//':'//ctime(5:6)
     call check_ret(nf_put_att_text(fid,NF_GLOBAL,'history' ,len_trim(str),str))
