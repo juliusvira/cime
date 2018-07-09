@@ -48,7 +48,7 @@ module seq_drydep_mod
   character(16),public,parameter :: DD_TABL = 'table'      ! dry-dep table (atm and lnd)
   character(16),public :: drydep_method = DD_XLND          ! Which option choosen
 
-  real(r8), public, parameter :: ph     = 1.e-5_r8         ! measure of the acidity (dimensionless)
+!  real(r8), public, parameter :: ph     = 1.e-5_r8         ! measure of the acidity (dimensionless)
 
   logical, public  :: lnd_drydep                           ! If dry-dep fields passed
   integer, public  :: n_drydep = 0                         ! Number in drypdep list
@@ -803,7 +803,7 @@ CONTAINS
 
   !====================================================================================
 
-  subroutine set_hcoeff_scalar( sfc_temp, heff )
+  subroutine set_hcoeff_scalar( sfc_temp, Hc, heff )
 
     !========================================================================
     ! Interface to seq_drydep_setHCoeff when input is scalar
@@ -817,19 +817,20 @@ CONTAINS
     implicit none
 
     real(r8), intent(in)     :: sfc_temp         ! Input surface temperature
+    real(r8), intent(in)     :: Hc               ! H+ ion concentration, 10**-pH
     real(r8), intent(out)    :: heff(n_drydep)   ! Output Henry's law coefficients
 
     !----- local -----
     real(r8) :: sfc_temp_tmp(1)    ! surface temp
 
     sfc_temp_tmp(:) = sfc_temp
-    call set_hcoeff_vector( 1, sfc_temp_tmp, heff(:n_drydep) )
+    call set_hcoeff_vector( 1, sfc_temp_tmp, Hc, heff(:n_drydep) )
 
   end subroutine set_hcoeff_scalar
 
   !====================================================================================
 
-  subroutine set_hcoeff_vector( ncol, sfc_temp, heff )
+  subroutine set_hcoeff_vector( ncol, sfc_temp, Hc, heff)
 
     !========================================================================
     ! Interface to seq_drydep_setHCoeff when input is vector
@@ -844,11 +845,12 @@ CONTAINS
 
     integer, intent(in)      :: ncol                  ! Input size of surface-temp vector
     real(r8), intent(in)     :: sfc_temp(ncol)        ! Surface temperature
+    real(r8), intent(in)     :: Hc                    ! H+ ion concentration, 10**-pH
     real(r8), intent(out)    :: heff(ncol,n_drydep)   ! Henry's law coefficients
-
+    
     !----- local -----
     real(r8), parameter :: t0     = 298._r8    ! Standard Temperature
-    real(r8), parameter :: ph_inv = 1._r8/ph   ! Inverse of PH
+    real(r8) :: ph_inv   ! Inverse of PH
     integer  :: m, l, id       ! indices
     real(r8) :: e298           ! Henry's law coefficient @ standard temperature (298K)
     real(r8) :: dhr            ! temperature dependence of Henry's law coefficient
@@ -864,6 +866,8 @@ CONTAINS
     ! notes:
     !-------------------------------------------------------------------------------
 
+    ph_inv = 1.0_r8/Hc
+    
     wrk(:) = (t0 - sfc_temp(:))/(t0*sfc_temp(:))
     do m = 1,n_drydep
        l    = mapping(m)
@@ -896,7 +900,7 @@ CONTAINS
                 heff(:,m) = heff(:,m)*(1._r8 + dk1s(:)*ph_inv)*(1._r8 + dk2s(:)*ph_inv)
                 !--- For NH3 ---
              else if( trim( drydep_list(m) ) == 'NH3' ) then
-                heff(:,m) = heff(:,m)*(1._r8 + dk1s(:)*ph/dk2s(:))
+                heff(:,m) = heff(:,m)*(1._r8 + Hc * dk1s(:)/dk2s(:))
                 !--- This can't happen ---
              else
                 write(s_logunit,F00) 'Bad species ',drydep_list(m)
